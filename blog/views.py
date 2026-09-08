@@ -3,12 +3,20 @@ from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_POST
 from django.views.generic import ListView
+
+from taggit.models import Tag
+
 from .models import Post
 from .forms import CommentForm, EmailPostForm
+
 # Create your views here.
 
-def post_list(request):
+def post_list(request, tag_slug=None):
     posts = Post.published.all()
+    tag=None
+    if tag_slug:
+        tag = get_object_or_404(Tag, slug=tag_slug)
+        posts = posts.filter(tags__in=[tag])
 
     paginator = Paginator(posts, 1)
     page_number = request.GET.get('page')
@@ -22,7 +30,10 @@ def post_list(request):
     return render(
         request,
         'blog/post/list.html',
-        {'posts': posts}
+        {
+            'posts': posts,
+            'tag': tag
+        }
     )
 
 def post_detail(request, year, month, day, post):
